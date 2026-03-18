@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Quy Am</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<style>
+body {margin:0;background:black;overflow:hidden;color:white;font-family:Arial}
+
+#warning {
+  position:absolute;
+  top:20%;
+  width:100%;
+  text-align:center;
+}
+
+/* thanh thông báo */
+#banner {
+  position:fixed;
+  top:0;
+  width:100%;
+  background:red;
+  text-align:center;
+  padding:10px;
+  font-weight:bold;
+  z-index:999;
+  display:none;
+}
+
+canvas {display:none}
+
+#flashlight {
+  position:absolute;
+  width:260px;height:260px;border-radius:50%;
+  pointer-events:none;
+  background: radial-gradient(circle, rgba(255,255,255,0.2), rgba(0,0,0,0.95) 70%);
+}
+
+#ghost {display:none;position:fixed;width:100%;height:100%;top:0;left:0}
+
+#noise {
+  position:fixed;
+  width:100%;
+  height:100%;
+  background:url("https://i.imgur.com/8fK4h6T.gif");
+  opacity:0.06;
+}
+</style>
+</head>
+
+<body>
+
+<div id="banner">
+Game kinh dị của Thắng – vui lòng đeo tai nghe để trải nghiệm
+</div>
+
+<div id="warning">
+<h1>⚠️ CẢNH BÁO</h1>
+<p>Game có thể gây giật mình mạnh</p>
+<button onclick="start()">Vào game</button>
+</div>
+
+<canvas id="game"></canvas>
+<div id="flashlight"></div>
+<div id="noise"></div>
+
+<img id="ghost">
+
+<audio id="bg" src="https://www.myinstants.com/media/sounds/creepy-ambience.mp3" loop></audio>
+<audio id="whisper" src="https://www.myinstants.com/media/sounds/whisper.mp3"></audio>
+<audio id="heart" src="https://www.myinstants.com/media/sounds/heartbeat.mp3" loop></audio>
+<audio id="scare" src="https://www.myinstants.com/media/sounds/scream.mp3"></audio>
+
+<script>
+let canvas=document.getElementById("game");
+let ctx=canvas.getContext("2d");
+
+canvas.width=innerWidth;
+canvas.height=innerHeight;
+
+let player={x:100,y:100};
+let ghost={x:600,y:300};
+
+let moveX=0, moveY=0;
+
+/* điều khiển */
+document.addEventListener("touchmove",e=>{
+  player.x=e.touches[0].clientX;
+  player.y=e.touches[0].clientY;
+
+  document.getElementById("flashlight").style.left=(player.x-130)+"px";
+  document.getElementById("flashlight").style.top=(player.y-130)+"px";
+});
+
+/* start */
+function start(){
+  document.getElementById("warning").style.display="none";
+  canvas.style.display="block";
+  document.getElementById("flashlight").style.display="block";
+
+  /* hiện banner */
+  let banner=document.getElementById("banner");
+  banner.style.display="block";
+  setTimeout(()=>{banner.style.display="none"},4000);
+
+  document.getElementById("bg").play();
+
+  loop();
+  aiGhost();
+  randomWhisper();
+}
+
+/* loop */
+function loop(){
+  ctx.fillStyle="#000";
+  ctx.fillRect(0,0,canvas.width,canvas.height);
+
+  ctx.fillStyle="white";
+  ctx.fillRect(player.x,player.y,10,10);
+
+  ctx.fillStyle="red";
+  ctx.fillRect(ghost.x,ghost.y,10,10);
+
+  let dx=player.x-ghost.x;
+  let dy=player.y-ghost.y;
+  let dist=Math.sqrt(dx*dx+dy*dy);
+
+  /* tim đập + rung */
+  if(dist<200){
+    document.getElementById("heart").volume=1-dist/200;
+    document.getElementById("heart").play();
+
+    if(navigator.vibrate) navigator.vibrate(100);
+  }
+
+  if(dist<30){
+    scare();
+  }
+
+  requestAnimationFrame(loop);
+}
+
+/* AI ma */
+function aiGhost(){
+  setInterval(()=>{
+    let dx=player.x-ghost.x;
+    let dy=player.y-ghost.y;
+
+    /* đôi khi đứng im nhìn */
+    if(Math.random()<0.3) return;
+
+    ghost.x+=dx*0.4;
+    ghost.y+=dy*0.4;
+
+    /* teleport sau lưng */
+    if(Math.random()<0.4){
+      ghost.x=player.x+(Math.random()*150-75);
+      ghost.y=player.y+(Math.random()*150-75);
+    }
+  },2000);
+}
+
+/* thì thầm */
+function randomWhisper(){
+  setInterval(()=>{
+    document.getElementById("whisper").play();
+  },7000);
+}
+
+/* jumpscare */
+function scare(){
+  let g=document.getElementById("ghost");
+  g.src="https://i.imgur.com/UYiroys.png";
+  g.style.display="block";
+
+  document.getElementById("scare").play();
+
+  document.body.style.transform="scale(1.2)";
+  if(navigator.vibrate) navigator.vibrate(300);
+
+  setTimeout(()=>{
+    g.style.display="none";
+    document.body.style.transform="scale(1)";
+  },800);
+}
+</script>
+
+</body>
+</html>
